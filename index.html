@@ -435,13 +435,13 @@ function score(card) {
   const exp = p.exposures;
   const dsl = p.lastSeen ? daysSince(p.lastSeen) : 0;
 
-  // Squared inverse rank: rank1=1.0, rank10=0.01, rank100=0.0001, rank1500~0.
-  // Makes top-frequency cards dominate strongly across a 2000-card pool.
-  const freqScore = 1 / (card.frequency_rank * card.frequency_rank);
+  // rank^1.5 inverse: rank1~39%, top10~78%, top30~88% of fresh-deck draws.
+  const freqScore = 1 / Math.pow(card.frequency_rank, 1.5);
 
-  // SR score is 0 for unseen cards. Once seen, urgency grows with days
-  // elapsed and decays with repeated exposure.
-  const srScore = exp > 0 ? (dsl + 1) / (exp * exp) : 0;
+  // Unseen cards get a full SR bonus (1.0) so they compete with recently-seen
+  // top-frequency cards. Seen cards: urgency recovers with days elapsed and
+  // decays with exposure count, suppressing cards seen today strongly.
+  const srScore = exp === 0 ? 1.0 : dsl / (exp + 1);
 
   return WA * freqScore + WB * srScore;
 }
