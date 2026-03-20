@@ -428,25 +428,40 @@ function checkDay() {
 }
 
 /* ── CARD SELECTION ── */
-function prog(id)  { return state.progress[id] || { exposures:0, lastSeen:null }; }
+function prog(id) { return state.progress[id] || { exposures:0, lastSeen:null }; }
 
 function score(card) {
   const p   = prog(card.id);
+  const exp = p.exposures;
   const dsl = p.lastSeen ? daysSince(p.lastSeen) : 0;
-  return WA / card.frequency_rank + WB * (1 / (p.exposures + 1)) * dsl;
+
+  // Squared inverse rank: rank1=1.0, rank10=0.01, rank100=0.0001, rank1500~0.
+  // Makes top-frequency cards dominate strongly across a 2000-card pool.
+  const freqScore = 1 / (card.frequency_rank * card.frequency_rank);
+
+  // SR score is 0 for unseen cards. Once seen, urgency grows with days
+  // elapsed and decays with repeated exposure.
+  const srScore = exp > 0 ? (dsl + 1) / (exp * exp) : 0;
+
+  return WA * freqScore + WB * srScore;
 }
 
 function pickCard() {
   if (!vocab.length) return null;
-  let pool = state.noNewSession
-    ? (vocab.filter(c => prog(c.id).exposures > 0) || vocab)
-    : vocab;
-  if (!pool.length) pool = vocab;
 
-  const scores = pool.map(c => Math.max(score(c), 0.00001));
+  let pool = vocab;
+  if (state.noNewSession) {
+    const seen = vocab.filter(c => prog(c.id).exposures > 0);
+    if (seen.length) pool = seen;
+  }
+
+  const scores = pool.map(c => Math.max(score(c), 1e-10));
   const total  = scores.reduce((a,b) => a+b, 0);
   let r = Math.random() * total;
-  for (let i = 0; i < pool.length; i++) { r -= scores[i]; if (r <= 0) return pool[i]; }
+  for (let i = 0; i < pool.length; i++) {
+    r -= scores[i];
+    if (r <= 0) return pool[i];
+  }
   return pool[pool.length - 1];
 }
 
