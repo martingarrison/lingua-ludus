@@ -897,8 +897,12 @@ window.addEventListener('DOMContentLoaded', async () => {
   checkDay();
 
   document.getElementById('btn-study').addEventListener('click', goStudy);
-  // Resume AudioContext on first touch (required by iOS Safari)
-  document.addEventListener('touchstart', () => { if (audioCtx) audioCtx.resume(); }, { once: true });
+  // iOS requires AudioContext to be created AND resumed inside a user gesture.
+  // Create it on the very first touch so it's ready before any sound fires.
+  document.addEventListener('touchstart', () => {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }, { once: true });
   document.getElementById('btn-back').addEventListener('click', goStats);
   document.getElementById('btn-about').addEventListener('click', goAbout);
   document.getElementById('btn-back-about').addEventListener('click', () => { showScreen('stats-screen'); renderStats(); });
