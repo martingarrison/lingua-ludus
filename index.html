@@ -335,11 +335,11 @@
 
 <!-- ALERT -->
 <div class="alert-sheet" id="alert-sheet">
-  <div class="alert-title">10 new words today</div>
-  <div class="alert-body">Feeling ambitious?</div>
+  <div class="alert-title">12 new words today</div>
+  <div class="alert-body">Up for a few more?</div>
   <div class="alert-btns">
-    <button class="btn-alert-more" id="btn-alert-more">Give me one more</button>
-    <button class="btn-alert-keep" id="btn-alert-keep">Keep reviewing</button>
+    <button class="btn-alert-more" id="btn-alert-more">Yes, keep going</button>
+    <button class="btn-alert-keep" id="btn-alert-keep">No, just review</button>
   </div>
 </div>
 
@@ -376,7 +376,7 @@ const TIERS = [
 ];
 const EXP_MILESTONES  = [10, 100, 500, 1000, 2000];
 const SEEN_MILESTONES = [10, 50, 100, 250, 500, 1000, 2000];
-const WA = 0.7, WB = 0.3, NEW_CAP = 10;
+const POOL_BASE = 30, POOL_GRAD = 5, NEW_SOFT_CAP = 12, NEW_HARD_CAP = 18;
 
 /* ── STATE ── */
 let vocab = [];
@@ -391,7 +391,7 @@ function newState() {
     lastDate: null,
     sessionCount: 0,
     noNewSession: false,
-    microCount: 0,
+    alertFired: false,
     tierAch: [],
     expAch: [],
     dailyHistory: {},
@@ -420,7 +420,7 @@ function checkDay() {
     if (state.lastDate) state.dailyHistory[state.lastDate] = state.newToday;
     state.newToday = 0;
     state.noNewSession = false;
-    state.microCount = 0;
+    state.alertFired = false;
     state.sessionCount = 0;
     state.lastDate = t;
     save();
@@ -430,32 +430,33 @@ function checkDay() {
 /* ── CARD SELECTION ── */
 function prog(id) { return state.progress[id] || { exposures:0, lastSeen:null }; }
 
-function score(card) {
-  const p   = prog(card.id);
-  const exp = p.exposures;
-  const dsl = p.lastSeen ? daysSince(p.lastSeen) : 0;
+// How many cards have graduated (5+ exposures) — determines pool size.
+function graduatedCount() {
+  return vocab.filter(c => prog(c.id).exposures >= POOL_GRAD).length;
+}
 
-  // rank^1.5 inverse: rank1~39%, top10~78%, top30~88% of fresh-deck draws.
-  const freqScore = 1 / Math.pow(card.frequency_rank, 1.5);
+// Active pool: top (POOL_BASE + graduated) cards by frequency rank, sorted.
+function activePool() {
+  const size = Math.min(POOL_BASE + graduatedCount(), vocab.length);
+  // vocab is assumed sorted by frequency_rank ascending; slice the top N.
+  const sorted = vocab.slice().sort((a,b) => a.frequency_rank - b.frequency_rank);
+  let pool = sorted.slice(0, size);
 
-  // Unseen cards get a full SR bonus (1.0) so they compete with recently-seen
-  // top-frequency cards. Seen cards: urgency recovers with days elapsed and
-  // decays with exposure count, suppressing cards seen today strongly.
-  const srScore = exp === 0 ? 1.0 : dsl / (exp + 1);
+  // If noNewSession, drop unseen cards from pool (fall back to full pool if none seen).
+  if (state.noNewSession) {
+    const seen = pool.filter(c => prog(c.id).exposures > 0);
+    if (seen.length) pool = seen;
+  }
 
-  return WA * freqScore + WB * srScore;
+  return pool;
 }
 
 function pickCard() {
   if (!vocab.length) return null;
+  const pool = activePool();
 
-  let pool = vocab;
-  if (state.noNewSession) {
-    const seen = vocab.filter(c => prog(c.id).exposures > 0);
-    if (seen.length) pool = seen;
-  }
-
-  const scores = pool.map(c => Math.max(score(c), 1e-10));
+  // Weight purely by 1 / (exposures + 1). Unseen = 1.0, seen once = 0.5, etc.
+  const scores = pool.map(c => 1 / (prog(c.id).exposures + 1));
   const total  = scores.reduce((a,b) => a+b, 0);
   let r = Math.random() * total;
   for (let i = 0; i < pool.length; i++) {
@@ -475,7 +476,7 @@ function revealCard() {
   p.exposures++;
   p.lastSeen = dateStr();
   state.progress[currentCard.id] = p;
-  if (wasNew) { state.newToday++; state.microCount++; }
+  if (wasNew) state.newToday++;
   save();
   checkAch();
 
@@ -485,7 +486,13 @@ function revealCard() {
   const dotsEl = document.getElementById('exp-dots');
   if (dotsEl) dotsEl.innerHTML = dotsHTML(p.exposures);
 
-  if (state.microCount >= NEW_CAP) setTimeout(showAlert, 500);
+  // Soft cap: alert once at 12. Hard cap: block new cards silently at 18.
+  if (!state.alertFired && state.newToday >= NEW_SOFT_CAP) {
+    state.alertFired = true;
+    setTimeout(showAlert, 500);
+  } else if (state.newToday >= NEW_HARD_CAP) {
+    state.noNewSession = true;
+  }
 }
 
 /* ── NEXT ── */
@@ -735,7 +742,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-back').addEventListener('click', goStats);
 
   document.getElementById('btn-alert-more').addEventListener('click', () => {
-    state.microCount = 0; hideAlert();
+    // Let them continue up to the hard cap - no further alert.
+    hideAlert();
   });
   document.getElementById('btn-alert-keep').addEventListener('click', () => {
     state.noNewSession = true; hideAlert();
