@@ -65,8 +65,8 @@
     /* ── STATS ── */
     #stats-screen { overflow-y: auto; gap: 0; }
 
-    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
-    .wordmark-wrap { display: flex; align-items: baseline; gap: 10px; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 28px; }
+    .wordmark-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
     .wordmark { font-family: var(--fd); font-style: italic; font-size: 1.2rem; color: var(--misty); }
     .btn-about {
       font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
@@ -235,24 +235,6 @@
     .card-empty-title { font-family: var(--fd); font-size: 1.4rem; color: var(--misty); }
     .card-empty-body { font-size: 0.875rem; }
 
-    /* ── ALERT ── */
-    .alert-sheet {
-      position: fixed; left: 20px; right: 20px;
-      bottom: calc(env(safe-area-inset-bottom,0px) + 20px);
-      background: var(--brg-mid); border: 1px solid rgba(217,184,186,0.3);
-      border-radius: 24px; padding: 24px; z-index: 50;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.55);
-      transform: translateY(calc(100% + 40px));
-      transition: transform 380ms cubic-bezier(0.34,1.56,0.64,1);
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .alert-sheet.visible { transform: translateY(0); }
-    .alert-title { font-family: var(--fd); font-size: 1.4rem; font-weight: 600; color: var(--chestnut); }
-    .alert-body  { font-size: 0.875rem; color: var(--muted); }
-    .alert-btns  { display: flex; flex-direction: column; gap: 10px; }
-    .btn-alert-more { background: var(--grape); color: #1a0a19; font-weight: 600; font-size: 0.875rem; padding: 12px 20px; border-radius: 12px; min-height: 44px; }
-    .btn-alert-keep { border: 1px solid var(--border); color: var(--misty); font-size: 0.875rem; padding: 12px 20px; border-radius: 12px; min-height: 44px; }
-
     /* ── MODAL ── */
     .modal-overlay {
       position: fixed; inset: 0;
@@ -287,6 +269,24 @@
       opacity: 0.4; pointer-events: none; transition: opacity 120ms;
     }
     .btn-modal-confirm.on { opacity: 1; pointer-events: all; }
+
+    /* ── ACHIEVEMENT BANNER ── */
+    .ach-banner {
+      position: fixed; left: 20px; right: 20px;
+      bottom: calc(env(safe-area-inset-bottom,0px) + 20px);
+      background: var(--brg-mid); border: 1px solid rgba(217,184,186,0.3);
+      border-radius: 18px; padding: 16px 20px; z-index: 50;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+      display: flex; align-items: center; gap: 14px;
+      transform: translateY(calc(100% + 40px));
+      transition: transform 380ms cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .ach-banner.visible { transform: translateY(0); }
+    .ach-banner-icon { font-size: 1.5rem; flex-shrink: 0; }
+    .ach-banner-text { display: flex; flex-direction: column; gap: 2px; }
+    .ach-banner-title { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grape-lt); }
+    .ach-banner-body  { font-family: var(--fd); font-size: 1rem; font-weight: 600; color: var(--chestnut); }
   </style>
 </head>
 <body>
@@ -399,13 +399,12 @@
   </div>
 </div>
 
-<!-- ALERT -->
-<div class="alert-sheet" id="alert-sheet">
-  <div class="alert-title">12 new words today</div>
-  <div class="alert-body">Up for a few more?</div>
-  <div class="alert-btns">
-    <button class="btn-alert-more" id="btn-alert-more">Yes, keep going</button>
-    <button class="btn-alert-keep" id="btn-alert-keep">No, just review</button>
+<!-- ACHIEVEMENT BANNER -->
+<div class="ach-banner" id="ach-banner">
+  <div class="ach-banner-icon">🏆</div>
+  <div class="ach-banner-text">
+    <div class="ach-banner-title">Achievement</div>
+    <div class="ach-banner-body" id="ach-banner-body"></div>
   </div>
 </div>
 
@@ -442,7 +441,7 @@ const TIERS = [
 ];
 const EXP_MILESTONES  = [10, 100, 500, 1000, 2000];
 const SEEN_MILESTONES = [10, 50, 100, 250, 500, 1000, 2000];
-const POOL_BASE = 30, POOL_GRAD = 5, NEW_SOFT_CAP = 12, NEW_HARD_CAP = 18;
+const POOL_BASE = 30, POOL_GRAD = 5;
 
 /* ── STATE ── */
 let vocab = [];
@@ -456,8 +455,6 @@ function newState() {
     newToday: 0,
     lastDate: null,
     sessionCount: 0,
-    noNewSession: false,
-    alertFired: false,
     tierAch: [],
     expAch: [],
     dailyHistory: {},
@@ -476,7 +473,7 @@ function load() {
 }
 
 /* ── DATE ── */
-function dateStr()     { return new Date().toISOString().slice(0,10); }
+function dateStr()     { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function daysSince(d)  { return d ? Math.max(0, Math.floor((Date.now() - new Date(d).getTime()) / 86400000)) : 0; }
 
 /* ── DAY RESET ── */
@@ -485,8 +482,6 @@ function checkDay() {
   if (state.lastDate !== t) {
     if (state.lastDate) state.dailyHistory[state.lastDate] = state.newToday;
     state.newToday = 0;
-    state.noNewSession = false;
-    state.alertFired = false;
     state.sessionCount = 0;
     state.lastDate = t;
     save();
@@ -504,17 +499,8 @@ function graduatedCount() {
 // Active pool: top (POOL_BASE + graduated) cards by frequency rank, sorted.
 function activePool() {
   const size = Math.min(POOL_BASE + graduatedCount(), vocab.length);
-  // vocab is assumed sorted by frequency_rank ascending; slice the top N.
   const sorted = vocab.slice().sort((a,b) => a.frequency_rank - b.frequency_rank);
-  let pool = sorted.slice(0, size);
-
-  // If noNewSession, drop unseen cards from pool (fall back to full pool if none seen).
-  if (state.noNewSession) {
-    const seen = pool.filter(c => prog(c.id).exposures > 0);
-    if (seen.length) pool = seen;
-  }
-
-  return pool;
+  return sorted.slice(0, size);
 }
 
 function pickCard() {
@@ -551,21 +537,12 @@ function revealCard() {
 
   const dotsEl = document.getElementById('exp-dots');
   if (dotsEl) dotsEl.innerHTML = dotsHTML(p.exposures);
-
-  // Soft cap: alert once at 12. Hard cap: block new cards silently at 18.
-  if (!state.alertFired && state.newToday >= NEW_SOFT_CAP) {
-    state.alertFired = true;
-    setTimeout(showAlert, 500);
-  } else if (state.newToday >= NEW_HARD_CAP) {
-    state.noNewSession = true;
-  }
 }
 
 /* ── NEXT ── */
 function nextCard() {
   state.sessionCount++;
   flipped = false;
-  hideAlert();
   currentCard = pickCard();
   renderCard();
   document.getElementById('session-ct').textContent =
@@ -573,20 +550,48 @@ function nextCard() {
 }
 
 /* ── ACHIEVEMENTS ── */
+let achBannerTimer = null;
+
+function showAchBanner(message) {
+  const banner = document.getElementById('ach-banner');
+  document.getElementById('ach-banner-body').textContent = message;
+  banner.classList.add('visible');
+  if (achBannerTimer) clearTimeout(achBannerTimer);
+  achBannerTimer = setTimeout(() => banner.classList.remove('visible'), 4000);
+}
+
 function checkAch() {
+  const newAchs = [];
   const total = Object.values(state.progress).reduce((s,p) => s + p.exposures, 0);
-  EXP_MILESTONES.forEach(m => { if (total >= m && !state.expAch.includes(m)) state.expAch.push(m); });
+
+  EXP_MILESTONES.forEach(m => {
+    if (total >= m && !state.expAch.includes(m)) {
+      state.expAch.push(m);
+      newAchs.push(m.toLocaleString() + ' total exposures');
+    }
+  });
+
   TIERS.forEach((tier, i) => {
     const cards = vocab.filter(c => c.frequency_rank >= tier.start && c.frequency_rank <= tier.end);
     const done  = cards.filter(c => prog(c.id).exposures >= 10).length;
-    if (cards.length && done === cards.length && !state.tierAch.includes(i)) state.tierAch.push(i);
+    if (cards.length && done === cards.length && !state.tierAch.includes(i)) {
+      state.tierAch.push(i);
+      newAchs.push(tier.name + ' complete!');
+    }
   });
-  save();
-}
 
-/* ── ALERT ── */
-function showAlert() { document.getElementById('alert-sheet').classList.add('visible'); }
-function hideAlert() { document.getElementById('alert-sheet').classList.remove('visible'); }
+  save();
+
+  // Show banners sequentially if multiple triggered at once
+  if (newAchs.length) {
+    const onCard = !document.getElementById('flashcard-screen').classList.contains('hidden');
+    if (onCard) {
+      newAchs.forEach((msg, i) => {
+        setTimeout(() => showAchBanner(msg), i * 4500);
+      });
+    }
+  }
+}
 
 /* ── SCREENS ── */
 function showScreen(id) {
@@ -609,7 +614,6 @@ function goStudy() {
 }
 
 function goStats() {
-  hideAlert();
   showScreen('stats-screen');
   renderStats();
 }
@@ -846,9 +850,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('btn-back').addEventListener('click', goStats);
   document.getElementById('btn-about').addEventListener('click', goAbout);
   document.getElementById('btn-back-about').addEventListener('click', () => { showScreen('stats-screen'); renderStats(); });
-
-  document.getElementById('btn-alert-more').addEventListener('click', () => { hideAlert(); });
-  document.getElementById('btn-alert-keep').addEventListener('click', () => { state.noNewSession = true; hideAlert(); });
 
   // Export
   document.getElementById('btn-export').addEventListener('click', () => {
