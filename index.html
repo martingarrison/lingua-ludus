@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#004225">
-  <title>VocabEsp</title>
+  <title>Lingua Ludus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -78,23 +78,20 @@
     .btn-study:active { transform: scale(0.96); }
 
     /* donut */
-    .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 32px; }
-    .donut-svg-wrap { position: relative; width: 172px; height: 172px; }
+    .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-bottom: 28px; }
+    .donut-svg-wrap { position: relative; width: min(88vw, 320px); height: min(88vw, 320px); }
     .donut-svg-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-    .donut-svg-wrap circle { fill: none; stroke-width: 12; }
+    .donut-svg-wrap circle { fill: none; stroke-width: 22; }
     .donut-track  { stroke: rgba(242,223,224,0.1); }
     .donut-fill   { stroke: var(--grape); stroke-linecap: round; }
     .donut-fill.complete { stroke: var(--chestnut); }
-    .donut-center {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
-    }
-    .donut-fraction { font-family: var(--fd); font-size: 2rem; font-weight: 600; line-height: 1; letter-spacing: -0.02em; }
-    .donut-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
-    .donut-tier { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grape); }
-    .donut-label { font-size: 0.95rem; color: var(--muted); }
-    .donut-label strong { color: var(--misty); font-weight: 600; }
-    .donut-pace { font-size: 0.75rem; color: var(--muted); }
+    .donut-center { display: none; }
+    .donut-fraction { display: none; }
+    .donut-sub { display: none; }
+    .donut-tier { font-size: 1rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--grape); }
+    .donut-label { font-size: 1.15rem; color: var(--misty); }
+    .donut-label strong { color: var(--misty); font-weight: 700; }
+    .donut-pace { font-size: 0.9rem; color: var(--grape-lt); }
 
     .divider { height: 1px; background: var(--border); margin-bottom: 24px; }
 
@@ -102,17 +99,17 @@
     .stat-rows { margin-bottom: 28px; }
     .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--border); }
     .stat-row:first-child { border-top: 1px solid var(--border); }
-    .stat-label { font-size: 1rem; color: var(--muted); }
+    .stat-label { font-size: 1.05rem; color: var(--misty); opacity: 0.75; }
     .stat-value { font-family: var(--fd); font-size: 1.5rem; font-weight: 600; line-height: 1; }
     .stat-value.accent { color: var(--chestnut); }
 
-    .sec-label { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+    .sec-label { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--grape-lt); margin-bottom: 14px; }
 
     /* goal bars */
     .goal-bars { margin-bottom: 28px; }
     .goal-bar { margin-bottom: 16px; }
-    .goal-bar-head { display: flex; justify-content: space-between; font-size: 0.875rem; margin-bottom: 6px; }
-    .goal-bar-head span:first-child { color: var(--muted); }
+    .goal-bar-head { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 6px; }
+    .goal-bar-head span:first-child { color: var(--misty); opacity: 0.75; }
     .goal-bar-head span:last-child  { font-weight: 600; color: var(--grape-lt); }
     .bar-track { height: 6px; background: rgba(242,223,224,0.1); border-radius: 99px; overflow: hidden; }
     .bar-fill { height: 100%; width: 0%; border-radius: 99px; background: linear-gradient(90deg, var(--grape-dk), var(--grape)); transition: width 0.9s cubic-bezier(0.22,1,0.36,1); }
@@ -120,9 +117,9 @@
 
     /* achievements */
     .ach-list { margin-bottom: 28px; display: flex; flex-direction: column; gap: 8px; }
-    .ach-item { padding: 10px 14px; border-left: 3px solid var(--chestnut); background: rgba(217,184,186,0.07); border-radius: 0 8px 8px 0; font-size: 0.875rem; line-height: 1.4; }
+    .ach-item { padding: 10px 14px; border-left: 3px solid var(--chestnut); background: rgba(217,184,186,0.07); border-radius: 0 8px 8px 0; font-size: 0.95rem; line-height: 1.4; color: var(--misty); opacity: 0.9; }
     .ach-item.tier-ach { border-left-color: var(--grape); background: rgba(179,143,176,0.07); }
-    .ach-empty { font-size: 0.875rem; color: var(--muted); font-style: italic; }
+    .ach-empty { font-size: 0.95rem; color: var(--misty); opacity: 0.5; font-style: italic; }
 
     /* util */
     .util-row { display: flex; gap: 12px; margin-top: auto; padding-top: 16px; }
@@ -168,8 +165,8 @@
     }
 
     .card-rank { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); align-self: flex-start; }
-    .card-word { font-family: var(--fd); font-size: clamp(2rem,8vw,3.5rem); font-weight: 400; color: var(--misty); letter-spacing: -0.02em; line-height: 1.1; }
-    .card-ctx-es { font-size: 0.875rem; color: var(--muted); font-style: italic; line-height: 1.6; max-width: 28ch; }
+    .card-word { font-family: var(--fd); font-size: clamp(2.6rem,10vw,4.5rem); font-weight: 400; color: var(--misty); letter-spacing: -0.02em; line-height: 1.1; }
+    .card-ctx-es { font-size: clamp(1rem,3.5vw,1.2rem); color: var(--muted); font-style: italic; line-height: 1.6; max-width: 28ch; }
 
     .btn-reveal {
       margin-top: auto; align-self: center;
@@ -181,10 +178,11 @@
     }
     .btn-reveal:active { transform: scale(0.96); }
 
-    .card-back-top { display: flex; flex-direction: column; gap: 12px; }
-    .card-word-sm { font-family: var(--fd); font-size: 1.3rem; font-weight: 300; font-style: italic; color: var(--muted); }
-    .card-eng { font-family: var(--fd); font-size: clamp(1.4rem,5.5vw,2.4rem); font-weight: 600; color: var(--chestnut); line-height: 1.2; letter-spacing: -0.02em; }
-    .card-ctx-en { font-size: 0.875rem; color: var(--muted); font-style: italic; line-height: 1.6; }
+    .card-back-top { display: flex; flex-direction: column; gap: 14px; }
+    .card-word-sm { font-family: var(--fd); font-size: clamp(1.4rem,5vw,1.8rem); font-weight: 300; font-style: italic; color: var(--muted); }
+    .card-eng { font-family: var(--fd); font-size: clamp(1.8rem,7vw,3rem); font-weight: 600; color: var(--chestnut); line-height: 1.2; letter-spacing: -0.02em; }
+    .card-eng .card-eng-alts { font-size: clamp(0.85rem,2.8vw,1rem); font-weight: 400; font-style: italic; color: var(--grape-lt); vertical-align: middle; }
+    .card-ctx-en { font-size: clamp(0.95rem,3.2vw,1.1rem); color: var(--muted); font-style: italic; line-height: 1.6; }
 
     .exp-dots { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
     .exp-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.12); }
@@ -263,7 +261,7 @@
 
 <!-- LOADING -->
 <div class="screen" id="loading-screen">
-  <div class="load-logo">Vocab<span>Esp</span></div>
+  <div class="load-logo">Lingua <span>Ludus</span></div>
   <div class="load-bar-track"><div class="load-bar" id="load-bar"></div></div>
   <div class="load-text" id="load-text">Loading…</div>
 </div>
@@ -271,16 +269,16 @@
 <!-- STATS -->
 <div class="screen hidden" id="stats-screen">
   <div class="topbar">
-    <div class="wordmark">VocabEsp</div>
+    <div class="wordmark">Lingua Ludus</div>
     <button class="btn-study" id="btn-study">Estudiar →</button>
   </div>
 
   <div class="donut-wrap">
     <div class="donut-svg-wrap">
-      <svg viewBox="0 0 172 172">
-        <circle class="donut-track" cx="86" cy="86" r="70"/>
-        <circle class="donut-fill" id="donut-fill" cx="86" cy="86" r="70"
-          stroke-dasharray="439.82" stroke-dashoffset="439.82"/>
+      <svg viewBox="0 0 320 320">
+        <circle class="donut-track" cx="160" cy="160" r="138"/>
+        <circle class="donut-fill" id="donut-fill" cx="160" cy="160" r="138"
+          stroke-dasharray="867.08" stroke-dashoffset="867.08"/>
       </svg>
       <div class="donut-center">
         <div class="donut-fraction" id="donut-fraction">0/0</div>
@@ -560,7 +558,7 @@ function renderStats() {
   document.getElementById('s-20').textContent    = twenty.toLocaleString();
 
   // donut — first incomplete tier
-  const CIRC = 2 * Math.PI * 70; // r=70
+  const CIRC = 2 * Math.PI * 138; // r=138
   let aTier = null, aM = 0, aT = 0;
   for (const tier of TIERS) {
     const cards = vocab.filter(c => c.frequency_rank >= tier.start && c.frequency_rank <= tier.end);
@@ -679,15 +677,32 @@ function renderCard() {
 
   const c     = currentCard;
   const p     = prog(c.id);
-  const parts = (c.english || '').split(' / ');
-  const eWord = parts[0] || '';
-  const eCtx  = parts.slice(1).join(' / ');
+
+  // Parse english field: "primary def / alt def / alt def / Context sentence here."
+  // Heuristic: the context sentence is the last slash-segment that ends with punctuation
+  // or starts with a capital and looks like a full sentence.
+  const rawEng = (c.english || '');
+  const allParts = rawEng.split(' / ');
+  
+  // Find where the context sentence starts: last segment that contains a space and capital start
+  let ctxIdx = allParts.length; // default: no context
+  for (let i = allParts.length - 1; i >= 1; i--) {
+    const seg = allParts[i].trim();
+    if (seg.length > 0 && seg[0] === seg[0].toUpperCase() && seg.includes(' ')) {
+      ctxIdx = i;
+      break;
+    }
+  }
+  const wordParts = allParts.slice(0, ctxIdx);
+  const eWord = wordParts[0] || '';
+  const eAlts = wordParts.slice(1).join(' / ');
+  const eCtx  = allParts.slice(ctxIdx).join(' / ');
 
   area.innerHTML =
     '<div class="card-wrap" id="card-wrap">' +
       '<div class="card-face card-front">' +
         '<div class="card-rank">#' + (c.frequency_rank ?? c.id) + '</div>' +
-        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">' +
+        '<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">' +
           '<div class="card-word">' + esc(c.spanish || '') + '</div>' +
           '<div class="card-ctx-es">' + (c.context ? esc(c.context) : '—') + '</div>' +
         '</div>' +
@@ -696,7 +711,7 @@ function renderCard() {
       '<div class="card-face card-back">' +
         '<div class="card-back-top">' +
           '<div class="card-word-sm">' + esc(c.spanish || '') + '</div>' +
-          '<div class="card-eng">'     + esc(eWord || '—')    + '</div>' +
+          '<div class="card-eng">' + esc(eWord || '—') + (eAlts ? '<span class="card-eng-alts"> &nbsp;/ ' + esc(eAlts) + '</span>' : '') + '</div>' +
           (eCtx ? '<div class="card-ctx-en">' + esc(eCtx) + '</div>' : '') +
           '<div class="exp-dots" id="exp-dots">' + dotsHTML(p.exposures) + '</div>' +
         '</div>' +
