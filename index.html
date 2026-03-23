@@ -637,22 +637,22 @@ function renderStats() {
   document.getElementById('s-10').textContent    = ten.toLocaleString();
   document.getElementById('s-20').textContent    = twenty.toLocaleString();
 
-  // donut — global progress across all 2000 words
+  // donut — XP-bar style: fills within current tier, resets on level up
   const CIRC = 2 * Math.PI * 100; // r=100
-  const totalWords = vocab.length || 2000;
 
-  // Current level = highest tier whose end threshold the user has passed
+  // Current level = the highest tier the user has fully entered (ten >= tier.start)
   let currentLevel = TIERS[0];
   for (const tier of TIERS) {
     if (ten >= tier.start) currentLevel = tier;
   }
 
-  // Next tier threshold — the end of the next tier, for pace estimate
-  const currentTierIdx = TIERS.indexOf(currentLevel);
-  const nextTier = TIERS[currentTierIdx + 1] || null;
-  const nextThreshold = nextTier ? nextTier.start - 1 : totalWords;
+  // Progress within this tier: from tier.start to tier.end (in learned word count)
+  const tierStart = currentLevel.start - 1; // words learned before this tier began
+  const tierEnd   = currentLevel.end;        // words needed to complete this tier
+  const tierCount = tierEnd - tierStart;     // total words in this tier
+  const tierDone  = Math.min(ten - tierStart, tierCount); // how many done within tier
 
-  const pct  = totalWords > 0 ? ten / totalWords : 0;
+  const pct  = tierCount > 0 ? tierDone / tierCount : 0;
   const fill = document.getElementById('donut-fill');
   fill.classList.toggle('complete', pct >= 1);
   fill.style.strokeDasharray  = CIRC;
@@ -664,22 +664,16 @@ function renderStats() {
   }));
 
   document.getElementById('donut-tier').textContent = currentLevel.name;
-  document.getElementById('donut-label').innerHTML  = '<strong>' + ten + ' of ' + totalWords + '</strong> words learned';
+  document.getElementById('donut-label').innerHTML  = '<strong>' + tierDone + ' of ' + tierCount + '</strong> words to next level';
 
   const hist   = Object.values(state.dailyHistory);
   const paceEl = document.getElementById('donut-pace');
-  if (hist.length && ten < totalWords) {
+  const wordsRemaining = tierCount - tierDone;
+  if (hist.length && wordsRemaining > 0) {
     const avg = hist.slice(-7).reduce((a,b) => a+b, 0) / Math.min(hist.length, 7);
-    if (avg > 0 && nextTier) {
-      const wordsToNextLevel = nextThreshold - ten;
-      paceEl.textContent = wordsToNextLevel > 0
-        ? nextTier.name + ' in ~' + Math.ceil(wordsToNextLevel / avg) + ' days'
-        : '';
-    } else {
-      paceEl.textContent = '';
-    }
+    paceEl.textContent = avg > 0 ? 'Next level in ~' + Math.ceil(wordsRemaining / avg) + ' days' : '';
   } else {
-    paceEl.textContent = pct >= 1 ? 'All words learned!' : '';
+    paceEl.textContent = pct >= 1 ? currentLevel.name + ' complete!' : '';
   }
 
   // goal bars
