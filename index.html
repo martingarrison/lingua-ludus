@@ -637,22 +637,22 @@ function renderStats() {
   document.getElementById('s-10').textContent    = ten.toLocaleString();
   document.getElementById('s-20').textContent    = twenty.toLocaleString();
 
-  // donut — first incomplete tier
+  // donut — global progress across all 2000 words
   const CIRC = 2 * Math.PI * 100; // r=100
-  let aTier = null, aM = 0, aT = 0;
+  const totalWords = vocab.length || 2000;
+
+  // Current level = highest tier whose end threshold the user has passed
+  let currentLevel = TIERS[0];
   for (const tier of TIERS) {
-    const cards = vocab.filter(c => c.frequency_rank >= tier.start && c.frequency_rank <= tier.end);
-    const m     = cards.filter(c => (p[c.id]?.exposures ?? 0) >= 10).length;
-    if (m < cards.length || !cards.length) { aTier = tier; aM = m; aT = cards.length; break; }
-  }
-  if (!aTier) {
-    aTier = TIERS[TIERS.length - 1];
-    const cards = vocab.filter(c => c.frequency_rank >= aTier.start && c.frequency_rank <= aTier.end);
-    aT = cards.length;
-    aM = cards.filter(c => (p[c.id]?.exposures ?? 0) >= 10).length;
+    if (ten >= tier.start) currentLevel = tier;
   }
 
-  const pct  = aT > 0 ? aM / aT : 0;
+  // Next tier threshold — the end of the next tier, for pace estimate
+  const currentTierIdx = TIERS.indexOf(currentLevel);
+  const nextTier = TIERS[currentTierIdx + 1] || null;
+  const nextThreshold = nextTier ? nextTier.start - 1 : totalWords;
+
+  const pct  = totalWords > 0 ? ten / totalWords : 0;
   const fill = document.getElementById('donut-fill');
   fill.classList.toggle('complete', pct >= 1);
   fill.style.strokeDasharray  = CIRC;
@@ -663,19 +663,23 @@ function renderStats() {
     fill.style.strokeDashoffset = CIRC * (1 - pct);
   }));
 
-  document.getElementById('donut-fraction').textContent = aM + '/' + aT;
-  document.getElementById('donut-tier').textContent     = aTier.name;
-  document.getElementById('donut-label').innerHTML      = 'Learned <strong>' + aM + ' of ' + aT + '</strong> words';
+  document.getElementById('donut-tier').textContent = currentLevel.name;
+  document.getElementById('donut-label').innerHTML  = '<strong>' + ten + ' of ' + totalWords + '</strong> words learned';
 
   const hist   = Object.values(state.dailyHistory);
   const paceEl = document.getElementById('donut-pace');
-  if (hist.length && aT > aM) {
+  if (hist.length && ten < totalWords) {
     const avg = hist.slice(-7).reduce((a,b) => a+b, 0) / Math.min(hist.length, 7);
-    paceEl.textContent = avg > 0
-      ? 'At this pace, ' + aTier.name + ' in ~' + Math.ceil((aT - aM) / avg) + ' days'
-      : '';
+    if (avg > 0 && nextTier) {
+      const wordsToNextLevel = nextThreshold - ten;
+      paceEl.textContent = wordsToNextLevel > 0
+        ? nextTier.name + ' in ~' + Math.ceil(wordsToNextLevel / avg) + ' days'
+        : '';
+    } else {
+      paceEl.textContent = '';
+    }
   } else {
-    paceEl.textContent = pct >= 1 ? aTier.name + ' complete!' : '';
+    paceEl.textContent = pct >= 1 ? 'All words learned!' : '';
   }
 
   // goal bars
@@ -778,14 +782,16 @@ function renderCard() {
   const eAlts = wordParts.slice(1).join(' / ');
   const eCtx  = allParts.slice(ctxIdx).join(' / ');
 
-  // Highlight the vocab word in the Spanish context sentence
+    // Highlight the vocab word in the Spanish context sentence
   function highlightCtx(sentence, spanish) {
     if (!sentence || !spanish) return esc(sentence || '—');
-    // Strip article (el/la/los/las) for bare-word matching
+    // Strip article for bare-word matching
     const bare = spanish.replace(/^(el|la|los|las|un|una)\s+/i, '').trim();
     const escaped = bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp('(' + escaped + '\\w*)', 'i');
-    return sentence.split(re).map((part, i) =>
+    // Use word boundaries — but Spanish has accented chars so also require
+    // the match be surrounded by non-letter characters or string edges
+    const re = new RegExp('((?<![\\wáéíóúüñÁÉÍÓÚÜÑ])' + escaped + '(?![\\wáéíóúüñÁÉÍÓÚÜÑ]))', 'i');
+    return sentence.split(re).map(part =>
       re.test(part) ? '<span class="word-hl">' + esc(part) + '</span>' : esc(part)
     ).join('');
   }
